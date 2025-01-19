@@ -1,0 +1,92 @@
+name: Frontend Continuous Integration
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'starter/frontend/**'  
+    branches: 
+      - main
+
+jobs:
+  LINT:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 'latest' 
+
+      - name: Cache dependencies
+        uses: actions/cache@v4  
+        with:
+          path: ~/.npm  
+          key: ${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-npm-
+
+      - name: Install dependencies
+        run: cd starter/frontend && npm ci
+      - name: Run lint      
+        run: cd starter/frontend && npm run lint
+
+  TEST: 
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 'latest'
+
+      - name: Cache dependencies
+        uses: actions/cache@v4  
+        with:
+          path: ~/.npm  
+          key: ${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-npm-
+
+      - name: Install dependencies 
+        run: cd starter/frontend && npm ci
+      - name: Run test
+        run: cd starter/frontend && npm run test
+
+  BUILD:
+    needs: [LINT, TEST]
+    runs-on: ubuntu-latest
+    env: 
+      REACT_APP_MOVIE_API_URL: 'http://localhost:5000' 
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 'latest'
+
+      - name: Cache dependencies
+        uses: actions/cache@v4  
+        with:
+          path: ~/.npm  
+          key: ${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-npm-          
+
+      - name: Install dependencies
+        run: cd starter/frontend && npm ci    
+      - name: Run test
+        run: cd starter/frontend && npm run test      
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2  
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v4  
+        with:
+          context: starter/frontend
+          file:  starter/frontend/Dockerfile
+          push: true
+          tags: frontend:${{ github.sha }}
+          build-args: |
+                  REACT_APP_MOVIE_API_URL=${{ env.REACT_APP_MOVIE_API_URL }}

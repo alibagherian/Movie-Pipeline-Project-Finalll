@@ -1,0 +1,105 @@
+name: Backend Continuous Deployment
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'starter/backend/**'  
+    branches: 
+      - main   
+
+jobs:
+  LINT:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip setuptools wheel
+          pip install pipenv
+      - name: Install project dependencies and flake8
+        run: |
+          cd starter/backend
+          pipenv install --dev
+          pipenv run pip install flake8
+      - name: Run lint
+        run: |
+          cd starter/backend
+          pipenv run flake8
+
+  TEST:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+      - name: Install dependencies 
+        run: |      
+          python -m pip install --upgrade pip setuptools wheel        
+          pip install pipenv
+      - name: Install project dependencies and pytest
+        run: |
+          cd starter/backend
+          pipenv install --dev         
+          pipenv run pip install pytest      
+      - name: Run tests
+        run: |
+          cd starter/backend
+          pipenv run test
+
+  BUILD:
+    needs: [LINT, TEST]
+    runs-on: ubuntu-latest
+    env:
+      ECR_REPOSITORY: backend 
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: |
+          cd starter/backend
+          python -m pip install --upgrade pip setuptools wheel
+          pip install pipenv
+          pipenv install --dev
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+      
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1        
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1  
+
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: 'latest'
+
+      - name: Update the kubeconfig
+        run: aws eks update-kubeconfig --name cluster
+
+      - name: set the image and deploy to EKS   
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }} 
+        run: |
+          cd starter/backend/k8s
+          kustomize edit set image backend=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          kustomize build | kubectl apply -f -
