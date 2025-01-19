@@ -86,7 +86,7 @@ jobs:
       - name: Update the kubeconfig
         run: aws eks update-kubeconfig --name cluster
 
-      - name: Set the image tag to the newer version    
+      - name: update the image tag    
         run: |
           cd starter/frontend/k8s
           kustomize edit set image frontend=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
