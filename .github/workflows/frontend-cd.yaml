@@ -92,4 +92,6 @@ jobs:
           kustomize edit set image frontend=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
 
       - name: Apply the manifests to the cluster
-        run: kustomize build | kubectl apply -f -
+        run: |     
+          cd starter/frontend/k8s
+          kustomize build | kubectl apply -f -
