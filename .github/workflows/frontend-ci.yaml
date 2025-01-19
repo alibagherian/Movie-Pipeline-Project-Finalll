@@ -84,7 +84,14 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-1               
+          aws-region: us-east-1                   
+      
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1                 
+
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }} 
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2  
@@ -95,6 +102,6 @@ jobs:
           context: starter/frontend
           file:  starter/frontend/Dockerfile
           push: true
-          tags: frontend:${{ github.sha }}
+          tags: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ github.sha }}
           build-args: |
                   REACT_APP_MOVIE_API_URL=${{ env.REACT_APP_MOVIE_API_URL }}
