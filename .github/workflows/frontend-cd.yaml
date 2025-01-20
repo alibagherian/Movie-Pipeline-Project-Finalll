@@ -77,12 +77,12 @@ jobs:
         uses: docker/setup-buildx-action@v2  
 
 
-    - name: Fetch Application URL
-      id: get_svc_url
-      run: |
-        cd starter/frontend/k8s
-        kubectl get svc -A
-        SVC_URL=$(kubectl get svc backend -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+      - name: Fetch Application URL
+        id: get_svc_url
+        run: |
+          cd starter/frontend/k8s
+          kubectl get svc -A
+          SVC_URL=$(kubectl get svc backend -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
           echo "SVC_URL=${SVC_URL}"
           echo "::set-output name=svc_url::${SVC_URL}" 
 
