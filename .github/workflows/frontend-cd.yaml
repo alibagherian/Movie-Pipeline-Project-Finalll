@@ -98,7 +98,7 @@ jobs:
         run: |
           cd ..
           echo "Using SVC_URL=${{ steps.get_svc_url.outputs.svc_url }}"
-          docker build --build-arg REACT_APP_MOVIE_API_URL=http://${{ steps.get_svc_url.outputs.svc_url }} -tag=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+          docker build --build-arg REACT_APP_MOVIE_API_URL=http://${{ steps.get_svc_url.outputs.svc_url }} -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
 
       - name: update the image tag    
