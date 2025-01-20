@@ -93,7 +93,7 @@ jobs:
          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         run: |
           echo "ECR_REGISTRY=$ECR_REGISTRY" >> $GITHUB_ENV  
-          
+
       - name: Build, tag, and push image to Amazon ECR
         run: |
           docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG starter/backend
@@ -114,3 +114,7 @@ jobs:
           cd starter/backend/k8s
           kustomize edit set image backend=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
           kustomize build | kubectl apply -f -
+          
+       - name: Print Application URL
+         run: |
+           kubectl get svc -A   
