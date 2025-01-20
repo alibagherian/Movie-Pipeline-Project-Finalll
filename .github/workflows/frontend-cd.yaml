@@ -74,8 +74,15 @@ jobs:
           echo "ECR_REGISTRY=$ECR_REGISTRY" >> $GITHUB_ENV               
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2  
+        uses: docker/setup-buildx-action@v2
 
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: 'latest'
+
+      - name: Update the kubeconfig
+        run: aws eks update-kubeconfig --name cluster --region us-east-1        
 
       - name: Fetch Application URL
         id: get_svc_url
@@ -93,14 +100,6 @@ jobs:
           echo "Using SVC_URL=${{ steps.get_svc_url.outputs.svc_url }}"
           docker build --build-arg REACT_APP_MOVIE_API_URL=http://${{ steps.get_svc_url.outputs.svc_url }} -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG starter/frontend
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-
-      - name: Set up kubectl
-        uses: azure/setup-kubectl@v3
-        with:
-          version: 'latest'
-
-      - name: Update the kubeconfig
-        run: aws eks update-kubeconfig --name cluster --region us-east-1
 
       - name: update the image tag    
         run: |
