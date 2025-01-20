@@ -41,7 +41,7 @@ jobs:
     needs: [LINT, TEST]
     runs-on: ubuntu-latest
     env: 
-      REACT_APP_MOVIE_API_URL: 'a231fac5669f147c4aacd013127b5597-168913287.us-east-1.elb.amazonaws.com'     
+      REACT_APP_MOVIE_API_URL: 'ac8de98ea190c4c3286488db66ebb04a-65811827.us-east-1.elb.amazonaws.com'     
       ECR_REPOSITORY: frontend
       IMAGE_TAG: ${{ github.sha }}      
 
